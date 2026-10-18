@@ -1,4 +1,6 @@
+import json
 from fastapi import APIRouter, HTTPException, Query
+from fastapi.responses import JSONResponse
 from pydantic import BaseModel
 from app.services.analysis_service import AnalysisService
 
@@ -10,6 +12,17 @@ class AnalysisRequest(BaseModel):
     timeframe: str = "1d"
     period: str = "max"
     source: str = "yahoo"
+
+def nan_to_null(obj):
+    if isinstance(obj, float):
+        if obj != obj: # check for NaN
+            return None
+        return obj
+    if isinstance(obj, dict):
+        return {k: nan_to_null(v) for k, v in obj.items()}
+    if isinstance(obj, list):
+        return [nan_to_null(v) for v in obj]
+    return obj
 
 @router.post("/analyze")
 async def analyze_symbol(request: AnalysisRequest):
@@ -23,7 +36,11 @@ async def analyze_symbol(request: AnalysisRequest):
             period=request.period,
             source=request.source
         )
-        return result
+        
+        # Clean NaN values to ensure JSON compliance
+        cleaned_result = nan_to_null(result)
+        return JSONResponse(content=cleaned_result)
+        
     except RuntimeError as e:
         raise HTTPException(status_code=500, detail=str(e))
     except Exception as e:
