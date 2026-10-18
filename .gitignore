@@ -1,3 +1,6 @@
 venv/
 tickerlab_services.egg-info/
 app/
+data/
+.env
+.pytest_cache/
