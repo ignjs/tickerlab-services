@@ -4,3 +4,4 @@ app/
 data/
 .env
 .pytest_cache/
+.github/
